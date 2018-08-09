@@ -39,5 +39,21 @@ class TodoListVC: UITableViewController {
             cell?.accessoryType = .checkmark
         }
     }
+    //MARK: - Add New Items
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        var textfield = UITextField()
+        let alert  = UIAlertController(title: "新增待辦事項", message: "", preferredStyle: .alert)
+        let action = UIAlertAction(title: "新增", style: .default) { (action) in
+            //添加事件功能
+            self.itemArray.append(textfield.text!)
+            self.tableView.reloadData()
+        }
+        alert.addTextField { (alertTextfield) in
+            alertTextfield.placeholder = "新增事項"
+            textfield = alertTextfield
+        }
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
 }
 
