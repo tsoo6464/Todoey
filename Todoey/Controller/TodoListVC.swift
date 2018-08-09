@@ -10,12 +10,25 @@ import UIKit
 
 class TodoListVC: UITableViewController {
     
-    var itemArray = ["Find Mike", "Buy Eggos", "Destory Demogorgon"]
+    var itemArray = [Item]()//["Find Mike", "Buy Eggos", "Destory Demogorgon"]
     let defaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+        
+        let item1 = Item()
+        item1.title = "Find Mike"
+        itemArray.append(item1)
+        
+        let item2 = Item()
+        item2.title = "Buy Eggos"
+        itemArray.append(item2)
+        
+        let item3 = Item()
+        item3.title = "Destory Demogorgon"
+        itemArray.append(item3)
+        
+        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
             itemArray = items
         }
     }
@@ -27,21 +40,18 @@ class TodoListVC: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "TodoItemCell", for: indexPath)
-        cell.textLabel?.text = itemArray[indexPath.row]
+        
+        let item = itemArray[indexPath.row]
+        cell.textLabel?.text = item.title
+        cell.accessoryType = item.done ? .checkmark : .none
         return cell
     }
     //MARK: - TableView Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
+        //點擊cell的動畫 不會讓選中的cell一直呈現灰色
         tableView.deselectRow(at: indexPath, animated: true)
-        
-        let cell = tableView.cellForRow(at: indexPath)
-        
-        if cell?.accessoryType == .checkmark {
-            cell?.accessoryType = .none
-        } else {
-            cell?.accessoryType = .checkmark
-        }
+        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        tableView.reloadData()
     }
     //MARK: - Add New Items
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
@@ -49,7 +59,9 @@ class TodoListVC: UITableViewController {
         let alert  = UIAlertController(title: "新增待辦事項", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "新增", style: .default) { (action) in
             //添加事件功能
-            self.itemArray.append(textfield.text!)
+            let newItem = Item()
+            newItem.title = textfield.text!
+            self.itemArray.append(newItem)
             self.defaults.set(self.itemArray, forKey: "TodoListArray")
             self.tableView.reloadData()
         }
