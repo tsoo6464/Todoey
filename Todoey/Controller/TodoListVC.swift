@@ -7,15 +7,24 @@
 //
 
 import UIKit
+import CoreData
 
 class TodoListVC: UITableViewController {
     
-    var itemArray = [Item]()//["Find Mike", "Buy Eggos", "Destory Demogorgon"]
-    let filePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    var itemArray = [Item]()
+    
+    var selectedCategory: Category? {
+        didSet{
+            loadItems()
+        }
+    }
+    
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        loadItems()
+        
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
     }
     
     //MARK: - TableView Datasource Methods
@@ -44,8 +53,10 @@ class TodoListVC: UITableViewController {
         let alert  = UIAlertController(title: "新增待辦事項", message: "", preferredStyle: .alert)
         let action = UIAlertAction(title: "新增", style: .default) { (action) in
             //添加事件功能
-            let newItem = Item()
+            let newItem = Item(context: self.context)
             newItem.title = textfield.text!
+            newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             self.saveItems()
         }
@@ -56,25 +67,52 @@ class TodoListVC: UITableViewController {
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
     }
-    //MARK: - Model Manupulation Methods
+    //MARK: - Model Manipulation Methods
     func saveItems() {
-        let encoder = PropertyListEncoder()
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: filePath!)
+            try context.save()
         } catch {
-            print("Error encoding item array, \(error)")
+            print("Error saving context \(error)")
         }
         tableView.reloadData()
     }
+    // = 是給傳入參數一個預設值 若呼叫方法時未加上參數 則使用預設值
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest(), predicact: NSPredicate? = nil) {
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        if let addtionalPredicate = predicact {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, addtionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context \(error)")
+        }
+        tableView.reloadData()
+    }
+}
+
+//MARK: - Search bar methods
+extension TodoListVC: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        // 建立搜尋的條件
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        // 搜尋的排序
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request, predicact: predicate)
+    }
     
-    func loadItems() {
-        if let data = try? Data(contentsOf: filePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding item array, \(error)")
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            DispatchQueue.main.async {
+                // 取消searchBar為當前操作
+                searchBar.resignFirstResponder()
             }
         }
     }
