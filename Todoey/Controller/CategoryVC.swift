@@ -8,14 +8,16 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class CategoryVC: UITableViewController {
-    
+class CategoryVC: SwipeTableViewController {
+    // Variable
     let realm = try! Realm()
     var categoryArray: Results<Category>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         loadCategories()
     }
     
@@ -24,9 +26,11 @@ class CategoryVC: UITableViewController {
         var textField = UITextField()
         let alert = UIAlertController(title: "新增分類", message: "", preferredStyle: .alert)
         
+        let cancelAtion = UIAlertAction(title: "取消", style: .cancel, handler: nil)
         let action = UIAlertAction(title: "新增", style: .default) { (action) in
             let newCategory = Category()
             newCategory.name = textField.text!
+            newCategory.cellBgColor = UIColor.randomFlat.hexValue()
             
             self.save(category: newCategory)
         }
@@ -37,6 +41,7 @@ class CategoryVC: UITableViewController {
         }
         
         alert.addAction(action)
+        alert.addAction(cancelAtion)
         present(alert, animated: true, completion: nil)
     }
     
@@ -50,10 +55,15 @@ class CategoryVC: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        //let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let category = categoryArray {
             cell.textLabel?.text = category.isEmpty ? "尚未新增分類" : category[indexPath.row].name
+            cell.backgroundColor = category.isEmpty ? UIColor(hexString: "#2086FF") : UIColor(hexString: category[indexPath.row].cellBgColor)
+            cell.textLabel?.textColor = category.isEmpty ? UIColor.white : ContrastColorOf(UIColor(hexString: category[indexPath.row].cellBgColor)!, returnFlat: true)
         }
+        
+        //cell.delegate = self
         
         return cell
     }
@@ -94,5 +104,18 @@ class CategoryVC: UITableViewController {
         categoryArray = realm.objects(Category.self)
         
         tableView.reloadData()
+    }
+    
+    //MARK: - Delete Data From Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let categoryForDeletion = self.categoryArray?[indexPath.row] {
+            do {
+                try self.realm.write {
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting category, \(error)")
+            }
+        }
     }
 }
