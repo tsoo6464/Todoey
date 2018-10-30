@@ -32,8 +32,17 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
         //guard categoryArray?.isEmpty == false else { return nil }
         let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
             
+            // Update model
             self.updateModel(at: indexPath)
             
+            // Coordinate table view update animations
+            self.tableView.beginUpdates()
+            self.tableView.deleteRows(at: [indexPath], with: .automatic)
+            if self.tableView.numberOfRows(inSection: 0) == 1 {
+                tableView.insertRows(at: [IndexPath(row: 0, section: 0)], with: .right)
+            }
+            action.fulfill(with: .delete)
+            self.tableView.endUpdates()
         }
         
         // customize the action appearance
@@ -44,7 +53,7 @@ class SwipeTableViewController: UITableViewController, SwipeTableViewCellDelegat
     
     func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
         var options = SwipeOptions()
-        options.expansionStyle = .destructive
+        options.expansionStyle = .destructive(automaticallyDelete: false)
         return options
     }
     

@@ -55,20 +55,25 @@ class TodoListVC: SwipeTableViewController {
     }
     
     //MARK: - TableView Datasource Methods
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if let todoItems = todoItems {
             return todoItems.isEmpty ? 1 : todoItems.count
-        } else {
-            return 1
         }
+        return 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        
         if let todoItems = todoItems {
             if let bgcolor = selectedCategory?.cellBgColor {
                 cell.backgroundColor = UIColor(hexString: bgcolor)!.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems.count))
                 cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
+                
                 if todoItems.isEmpty {
                     cell.textLabel?.text = "尚未新增項目"
                 } else {
@@ -135,6 +140,7 @@ class TodoListVC: SwipeTableViewController {
         todoItems = selectedCategory?.items.sorted(byKeyPath: "dateCreate", ascending: true)
         tableView.reloadData()
     }
+    
     //MARK: - Delete Data From Swipe
     override func updateModel(at indexPath: IndexPath) {
         if let item = self.todoItems?[indexPath.row] {
