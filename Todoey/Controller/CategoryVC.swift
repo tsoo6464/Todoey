@@ -56,10 +56,17 @@ class CategoryVC: SwipeTableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
-        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        var cell = super.tableView(tableView, cellForRowAt: indexPath)
         if let category = categoryArray {
+            // 沒創建分類 建立的是一般的cell 不能進行刪除事件
+            if category.isEmpty {
+                cell = UITableViewCell()
+            }
             cell.textLabel?.text = category.isEmpty ? "尚未新增分類" : category[indexPath.row].name
             cell.backgroundColor = category.isEmpty ? UIColor(hexString: "#2086FF") : UIColor(hexString: category[indexPath.row].cellBgColor)
+            // 沒創建分類時不能點擊cell
+            tableView.allowsSelection = category.isEmpty ? false : true
+            
             cell.textLabel?.textColor = category.isEmpty ? UIColor.white : ContrastColorOf(UIColor(hexString: category[indexPath.row].cellBgColor)!, returnFlat: true)
         }
         

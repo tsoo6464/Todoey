@@ -67,21 +67,24 @@ class TodoListVC: SwipeTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = super.tableView(tableView, cellForRowAt: indexPath)
+        var cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let todoItems = todoItems {
             if let bgcolor = selectedCategory?.cellBgColor {
-                cell.backgroundColor = UIColor(hexString: bgcolor)!.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems.count))
-                cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
                 
                 if todoItems.isEmpty {
+                    cell = UITableViewCell()
                     cell.textLabel?.text = "尚未新增項目"
+                    tableView.allowsSelection = false
                 } else {
                     let item = todoItems[indexPath.row]
                     cell.textLabel?.text = item.title
-                    
+                    tableView.allowsSelection = true
                     cell.accessoryType = item.done ? .checkmark : .none
                 }
+                
+                cell.backgroundColor = UIColor(hexString: bgcolor)!.darken(byPercentage: CGFloat(indexPath.row) / CGFloat(todoItems.count))
+                cell.textLabel?.textColor = ContrastColorOf(cell.backgroundColor!, returnFlat: true)
             }
         }
         return cell
